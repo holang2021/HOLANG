@@ -1,0 +1,40 @@
+name: '📊 质量复盘'
+description: '版本结束后的质量复盘报告'
+title: '[Retrospect] '
+labels: ["doc:report"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: '📌 版本号'
+      placeholder: 'v1.2.3'
+    validations:
+      required: true
+  - type: textarea
+    id: bug_dist
+    attributes:
+      label: '📊 Bug 分布'
+      placeholder: '按严重度/模块/根因的统计'
+    validations:
+      required: true
+  - type: textarea
+    id: fix_metrics
+    attributes:
+      label: '⏱️ 修复效率'
+      placeholder: 'MTTR / 重开率 / 逃逸率'
+    validations:
+      required: true
+  - type: textarea
+    id: issues
+    attributes:
+      label: '🔍 问题提炼'
+      placeholder: '流程问题 / 需求问题 / 研发问题 / 测试覆盖问题'
+    validations:
+      required: true
+  - type: textarea
+    id: improve
+    attributes:
+      label: '💡 改进建议'
+      placeholder: '下一版本的具体改进措施'
+    validations:
+      required: true
