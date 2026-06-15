@@ -99,4 +99,24 @@ OPS知识库/
 
 ---
 
-> 📌 **最后更新：** 2026-06-15 | **条目数：** 29 | **版本：** v1.1
+## 六、GitHub Issue 追踪看板
+
+| Issue | Phase | 任务 | 标签 |
+|:-----:|:-----:|------|------|
+| [#13](https://github.com/holang2021/HOLANG/issues/13) | Phase1 | 测试用例自动生成器 | enhancement |
+| [#14](https://github.com/holang2021/HOLANG/issues/14) | Phase1 | 测试资料库建设 | documentation |
+| [#15](https://github.com/holang2021/HOLANG/issues/15) | Phase2 | Bug反馈标准化流程 | enhancement |
+| [#20](https://github.com/holang2021/HOLANG/issues/20) | Phase2 | Bug 跟踪看板搭建 | infrastructure |
+| [#21](https://github.com/holang2021/HOLANG/issues/21) | Phase3 | 日志与接口排查工具链 | tooling |
+| [#22](https://github.com/holang2021/HOLANG/issues/22) | Phase3 | 可观测性基础设施 | infrastructure |
+| [#16](https://github.com/holang2021/HOLANG/issues/16) | Phase4 | 回归测试自动化 | enhancement |
+| [#23](https://github.com/holang2021/HOLANG/issues/23) | Phase4 | CI/CD 质量门禁 | infrastructure |
+| [#17](https://github.com/holang2021/HOLANG/issues/17) | Phase5 | 版本验收标准与报告 | enhancement |
+| [#24](https://github.com/holang2021/HOLANG/issues/24) | Phase5 | 上线风险管控 | risk |
+| [#18](https://github.com/holang2021/HOLANG/issues/18) | Phase6 | 质量复盘报告体系 | enhancement |
+| [#19](https://github.com/holang2021/HOLANG/issues/19) | Phase6 | 团队规范沉淀与技能发布 | documentation |
+
+> 📊 **Phase 1-6 全周期覆盖** | **12 个活跃 Issue** | **12 个已完成 (v1.0)**
+
+---
+> 📌 **最后更新：** 2026-06-15 | **条目数：** 31 | **版本：** v1.2
