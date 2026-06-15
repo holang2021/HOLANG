@@ -1,0 +1,50 @@
+name: '📋 版本验收'
+description: '版本上线前的验收检查清单'
+title: '[Acceptance] '
+labels: ["doc:report", "Phase5"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: '📌 版本号'
+      placeholder: 'v1.2.3'
+    validations:
+      required: true
+  - type: textarea
+    id: pass
+    attributes:
+      label: '✅ 通过项'
+      placeholder: '列出已通过的测试'
+    validations:
+      required: true
+  - type: textarea
+    id: fail
+    attributes:
+      label: '❌ 未解决 Bug'
+      placeholder: '列出未解决 Bug 及编号'
+    validations:
+      required: true
+  - type: textarea
+    id: blocked
+    attributes:
+      label: '🚫 阻塞项'
+      placeholder: '列出阻塞上线的项'
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: '⚠️ 上线风险'
+      placeholder: '列出已知风险'
+    validations:
+      required: true
+  - type: dropdown
+    id: decision
+    attributes:
+      label: '🎯 验收结论'
+      options:
+        - 通过 - 可上线
+        - 有条件通过 - 部分修复后上线
+        - 不通过 - 延期上线
+    validations:
+      required: true
