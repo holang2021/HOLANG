@@ -1,0 +1,27 @@
+{
+  "name": "holang-ops-skills",
+  "description": "昊朗 OPS 建设系统技能包 — Bug跟踪、测试验收、质量复盘六阶段全流程自动化。含 Chrome侦察、Goal推进 等 50 个生产级技能。",
+  "version": "1.0.0",
+  "author": {
+    "name": "holang2021",
+    "email": "holang2021@github"
+  },
+  "repository": "https://github.com/holang2021/HOLANG",
+  "homepage": "https://github.com/holang2021/HOLANG#readme",
+  "keywords": ["ops", "qa", "bug-tracking", "test-automation", "ci-cd", "质量保障"],
+  "marketplace": {
+    "category": "devops",
+    "badges": ["production", "team-verified"],
+    "screenshots": []
+  },
+  "skills": [
+    "skills/ops-gate",
+    "skills/ops-goal-tracker",
+    "skills/ops-test-generator",
+    "skills/ops-bug-standardizer",
+    "skills/ops-regression",
+    "skills/ops-acceptance",
+    "skills/ops-retrospect",
+    "skills/ops-knowledge-base"
+  ]
+}
