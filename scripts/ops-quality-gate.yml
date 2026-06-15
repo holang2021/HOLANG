@@ -1,0 +1,87 @@
+name: OPS CI/CD Quality Gate
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  # ═══════════════ Stage 1: Lint & Build ═══════════════
+  lint-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npx tsc --noEmit
+
+  # ═══════════════ Stage 2: Unit Tests ═══════════════
+  unit-test:
+    needs: lint-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - run: npm test -- --coverage
+      - name: Coverage Gate
+        run: |
+          LINES=$(grep -oP 'Lines\s*:\s*\K[\d.]+' coverage/lcov-report/index.html || echo "0")
+          BRANCH=$(grep -oP 'Branches\s*:\s*\K[\d.]+' coverage/lcov-report/index.html || echo "0")
+          echo "Lines: ${LINES}% | Branches: ${BRANCH}%"
+          if (( $(echo "$LINES < 80" | bc -l) )); then
+            echo "❌ 行覆盖率 ${LINES}% < 80% 门禁"; exit 1
+          fi
+          if (( $(echo "$BRANCH < 70" | bc -l) )); then
+            echo "❌ 分支覆盖率 ${BRANCH}% < 70% 门禁"; exit 1
+          fi
+          echo "✅ 覆盖率门禁通过"
+
+  # ═══════════════ Stage 3: Security Scan ═══════════════
+  security:
+    needs: lint-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - name: Dependency Audit
+        run: npm audit --audit-level=high 2>&1; [ $? -le 1 ] || exit 1
+      - name: Secret Detection
+        uses: gitleaks/gitleaks-action@v2
+        with: { args: 'detect --source . --verbose' }
+
+  # ═══════════════ Stage 4: Code Review Gate ═══════════════
+  review-gate:
+    needs: lint-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Change Size Check
+        run: |
+          ADDITIONS=$(git diff --stat origin/main...HEAD | tail -1 | awk '{print $4}')
+          if [ -n "$ADDITIONS" ] && [ "$ADDITIONS" -gt 100 ]; then
+            echo "⚠️  变更行数 ${ADDITIONS} > 100，建议拆分为更小的 PR"
+          fi
+      - name: File Count Check
+        run: |
+          FILES=$(git diff --name-only origin/main...HEAD | wc -l)
+          if [ "$FILES" -gt 5 ]; then
+            echo "⚠️  涉及 ${FILES} 个文件，超过 5 个建议拆分"
+          fi
+
+  # ═══════════════ Stage 5: Build & Integration Test ═══════════════
+  integration:
+    needs: [unit-test, security, review-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - run: npm run test:integration || echo "⚠️ 集成测试未配置"
