@@ -1,4 +1,4 @@
-name: OPS CI/CD Quality Gate
+name: OPS Skills Quality Gate
 on:
   pull_request:
     branches: [main]
@@ -6,82 +6,171 @@ on:
     branches: [main]
 
 jobs:
-  # ═══════════════ Stage 1: Lint & Build ═══════════════
-  lint-build:
+  # ═══════════════ Stage 1: Skills Validation ═══════════════
+  validate-skills:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: 'npm' }
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npx tsc --noEmit
 
-  # ═══════════════ Stage 2: Unit Tests ═══════════════
-  unit-test:
-    needs: lint-build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: 'npm' }
-      - run: npm ci
-      - run: npm test -- --coverage
-      - name: Coverage Gate
+      - name: Validate plugin.json
         run: |
-          LINES=$(grep -oP 'Lines\s*:\s*\K[\d.]+' coverage/lcov-report/index.html || echo "0")
-          BRANCH=$(grep -oP 'Branches\s*:\s*\K[\d.]+' coverage/lcov-report/index.html || echo "0")
-          echo "Lines: ${LINES}% | Branches: ${BRANCH}%"
-          if (( $(echo "$LINES < 80" | bc -l) )); then
-            echo "❌ 行覆盖率 ${LINES}% < 80% 门禁"; exit 1
-          fi
-          if (( $(echo "$BRANCH < 70" | bc -l) )); then
-            echo "❌ 分支覆盖率 ${BRANCH}% < 70% 门禁"; exit 1
-          fi
-          echo "✅ 覆盖率门禁通过"
+          echo "🔍 检查 plugin.json..."
+          python3 -c "
+          import json, sys
+          with open('plugin.json') as f:
+              data = json.load(f)
+          assert 'name' in data, '缺少 name 字段'
+          assert 'skills' in data, '缺少 skills 字段'
+          assert isinstance(data['skills'], list), 'skills 必须是数组'
+          assert len(data['skills']) >= 1, '至少需要 1 个 skill'
+          print(f'✅ plugin.json 有效: {len(data[\"skills\"])} 个 skills')
+          "
 
-  # ═══════════════ Stage 3: Security Scan ═══════════════
-  security:
-    needs: lint-build
+      - name: Validate all SKILL.md files
+        run: |
+          echo "🔍 检查所有 SKILL.md..."
+          ERRORS=0
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "$skill_dir")
+            skill_file="${skill_dir}SKILL.md"
+            if [ ! -f "$skill_file" ]; then
+              echo "❌ 缺失: ${skill_file}"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+            # Check YAML frontmatter
+            if ! grep -q '^---$' "$skill_file"; then
+              echo "❌ ${skill_name}: 缺少 YAML frontmatter"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+            # Check name field
+            name=$(sed -n '/^---$/,/^---$/p' "$skill_file" | grep '^name:' | awk '{print $2}')
+            if [ "$name" != "$skill_name" ]; then
+              echo "❌ ${skill_name}: SKILL.md name 字段 ($name) 与目录名不匹配"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "✅ ${skill_name}: SKILL.md 有效"
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "❌ 发现 ${ERRORS} 个错误"
+            exit 1
+          fi
+          echo "✅ 所有 SKILL.md 验证通过"
+
+      - name: Validate plugin.json skills paths
+        run: |
+          echo "🔍 检查 plugin.json 技能路径..."
+          python3 -c "
+          import json, os
+          with open('plugin.json') as f:
+              data = json.load(f)
+          errors = 0
+          for path in data['skills']:
+              skill_file = f'{path}/SKILL.md'
+              if not os.path.exists(skill_file):
+                  print(f'❌ plugin.json 引用不存在: {skill_file}')
+                  errors += 1
+              else:
+                  print(f'✅ {path}')
+          if errors > 0:
+              exit(1)
+          print('✅ plugin.json 所有路径有效')
+          "
+
+  # ═══════════════ Stage 2: Documentation Check ═══════════════
+  check-docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: 'npm' }
-      - run: npm ci
-      - name: Dependency Audit
-        run: npm audit --audit-level=high 2>&1; [ $? -le 1 ] || exit 1
-      - name: Secret Detection
+
+      - name: Check required docs exist
+        run: |
+          echo "🔍 检查必要文档..."
+          REQUIRED_DOCS=(
+            "docs/OPS知识库_主索引.md"
+            "docs/OPS命名规范.md"
+            "docs/测试用例生成模板.md"
+            "docs/Bug反馈标准化流程.md"
+            "docs/回归测试清单模板.md"
+            "docs/质量复盘报告模板.md"
+          )
+          ERRORS=0
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ -f "$doc" ]; then
+              echo "✅ $doc"
+            else
+              echo "❌ 缺失: $doc"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "❌ 缺失 ${ERRORS} 个必要文档"
+            exit 1
+          fi
+          echo "✅ 所有必要文档存在"
+
+  # ═══════════════ Stage 3: Secret Detection ═══════════════
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: GitLeaks Secret Detection
         uses: gitleaks/gitleaks-action@v2
-        with: { args: 'detect --source . --verbose' }
+        with:
+          args: 'detect --source . --verbose --redact'
 
-  # ═══════════════ Stage 4: Code Review Gate ═══════════════
-  review-gate:
-    needs: lint-build
+  # ═══════════════ Stage 4: Naming Convention Check ═══════════════
+  naming-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Change Size Check
-        run: |
-          ADDITIONS=$(git diff --stat origin/main...HEAD | tail -1 | awk '{print $4}')
-          if [ -n "$ADDITIONS" ] && [ "$ADDITIONS" -gt 100 ]; then
-            echo "⚠️  变更行数 ${ADDITIONS} > 100，建议拆分为更小的 PR"
-          fi
-      - name: File Count Check
-        run: |
-          FILES=$(git diff --name-only origin/main...HEAD | wc -l)
-          if [ "$FILES" -gt 5 ]; then
-            echo "⚠️  涉及 ${FILES} 个文件，超过 5 个建议拆分"
-          fi
 
-  # ═══════════════ Stage 5: Build & Integration Test ═══════════════
-  integration:
-    needs: [unit-test, security, review-gate]
+      - name: Check skill naming convention
+        run: |
+          echo "🔍 检查命名规范..."
+          ERRORS=0
+          for skill_dir in skills/*/; do
+            skill_name=$(basename "$skill_dir")
+            if [[ "$skill_name" != ops-* ]]; then
+              echo "❌ ${skill_name}: 必须以 'ops-' 开头"
+              ERRORS=$((ERRORS + 1))
+            fi
+          done
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "❌ ${ERRORS} 个命名违规，参见 docs/OPS命名规范.md"
+            exit 1
+          fi
+          echo "✅ 所有 skill 命名符合规范"
+
+      - name: Check Issue Template labels
+        run: |
+          echo "🔍 检查 Issue 模板..."
+          for tpl in .github/ISSUE_TEMPLATE/*.yml; do
+            echo "📄 $(basename $tpl)"
+            grep 'labels:' "$tpl" || echo "  ⚠️ 未设置默认标签"
+          done
+
+  # ═══════════════ Stage 5: Summary ═══════════════
+  summary:
+    needs: [validate-skills, check-docs, security-scan, naming-check]
     runs-on: ubuntu-latest
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: 'npm' }
-      - run: npm ci
-      - run: npm run test:integration || echo "⚠️ 集成测试未配置"
+      - name: Quality Gate Result
+        run: |
+          if [ "${{ needs.validate-skills.result }}" = "success" ] && \
+             [ "${{ needs.check-docs.result }}" = "success" ] && \
+             [ "${{ needs.naming-check.result }}" = "success" ]; then
+            echo "🟢 OPS 质量门禁通过"
+          else
+            echo "🔴 OPS 质量门禁未通过"
+            echo "  Skills: ${{ needs.validate-skills.result }}"
+            echo "  Docs: ${{ needs.check-docs.result }}"
+            echo "  Naming: ${{ needs.naming-check.result }}"
+            exit 1
+          fi
