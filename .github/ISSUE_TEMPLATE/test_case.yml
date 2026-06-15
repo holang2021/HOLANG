@@ -1,0 +1,54 @@
+name: '🧪 测试用例'
+description: '基于 PRD 创建结构化测试用例'
+title: '[TestCase] '
+labels: ["test:case", "Phase1"]
+body:
+  - type: input
+    id: module
+    attributes:
+      label: '📦 模块'
+      placeholder: '功能模块名'
+    validations:
+      required: true
+  - type: input
+    id: prd
+    attributes:
+      label: '📄 关联 PRD'
+      placeholder: 'PRD 链接或编号'
+    validations:
+      required: true
+  - type: textarea
+    id: precondition
+    attributes:
+      label: '⚙️ 前置条件'
+      placeholder: '需要的环境/数据/权限'
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: '🔄 测试步骤'
+      placeholder: '1. ...
+2. ...
+3. ...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: '✅ 预期结果'
+      placeholder: '每一步的预期'
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: '🏷️ 场景类型'
+      options:
+        - 正常流程
+        - 边界场景
+        - 异常场景
+        - 权限场景
+        - 兼容性场景
+    validations:
+      required: true
