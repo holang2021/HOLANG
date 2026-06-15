@@ -1,0 +1,61 @@
+name: '🐛 Bug 反馈'
+description: '发现 Bug？按这个模板提交，自动补齐所有字段'
+title: '[Bug] '
+labels: ["bug:P2"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: '📌 版本号'
+      placeholder: 'v1.2.3'
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: '💻 复现环境'
+      placeholder: 'Chrome 120 / macOS / 测试环境'
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: '🔄 复现步骤'
+      description: '按 1→2→3 列出'
+      placeholder: '1. 打开 xxx
+2. 点击 xxx
+3. 看到 xxx'
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: '❌ 实际结果'
+      placeholder: '发生了什么'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: '✅ 期望结果'
+      placeholder: '应该发生什么'
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: '🚨 严重程度'
+      options:
+        - P0-阻断上线
+        - P1-严重
+        - P2-一般
+        - P3-轻微
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: '📊 影响范围'
+      placeholder: '影响了哪些模块/用户'
+    validations:
+      required: true
